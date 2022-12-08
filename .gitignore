@@ -30,3 +30,4 @@ override.tf.json
 
 key.json
 *.json
+*.txt
