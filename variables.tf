@@ -1,13 +1,13 @@
 # Заменить на ID своего облака
 # https://console.cloud.yandex.ru/cloud?section=overview
 variable "yandex_cloud_id" {
-  default = "b1g220k55v5cktv4kfki"
+  default = ""
 }
 
 # Заменить на Folder своего облака
 # https://console.cloud.yandex.ru/cloud?section=overview
 variable "yandex_folder_id" {
-  default = "b1gd3hm4niaifoa8dahm"
+  default = ""
 }
 
 # Заменить на ID своего образа
