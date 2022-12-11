@@ -88,7 +88,7 @@ resource "yandex_vpc_subnet" "subnet_priv" {
 }
 ```
 
-### 3. ВМ frontend, backend
+### 3. Инстансы frontend, backend
 
 * frontend.tf
 ```tf
@@ -160,7 +160,7 @@ resource "yandex_compute_instance" "backend" {
 }
 ```
 
-### 4. ВМ NAT
+### 4. Инстанс NAT
 
 * natgw.tf
 ```tf
@@ -179,7 +179,6 @@ resource "yandex_compute_instance" "natgw" {
   boot_disk {
     initialize_params {
       image_id    = var.nat-gw
-#      image_id    = "${var.nat-gw}"
       name        = "root-natgw"
       type        = "network-nvme"
       size        = "10"
@@ -199,7 +198,7 @@ resource "yandex_compute_instance" "natgw" {
 ```
 
 
-### 5. Таблица маршрутизации
+### 5. Таблица маршрутизации, связанной с подсетью private
 
 * routetable.tf
 ```tf
@@ -214,14 +213,14 @@ resource "yandex_vpc_route_table" "rt-a" {
   }
 }
 ```
-### 6. Ограничение доступа по сети (Security group)
+### 6. Ограничение доступа по сети (Security group) для NAT инстанса
 
 * securitygroup.tf
 ```tf
-#Security group
-resource "yandex_vpc_security_group" "group1" {
-  name        = "My security group"
-  description = "description for my security group"
+##Security group
+resource "yandex_vpc_security_group" "natgw" {
+  name        = "Security group for NAt-instance"
+  description = "Traffic instance NAT"
   network_id  = "${yandex_vpc_network.default.id}"
 
   labels = {
@@ -230,27 +229,17 @@ resource "yandex_vpc_security_group" "group1" {
 
   ingress {
     protocol       = "ANY"
-    description    = "rule1 description"
-    v4_cidr_blocks = ["192.168.10.0/24"]
+    description    = "from frontend and backup to natgw"
+    v4_cidr_blocks = ["192.168.10.11/32", "192.168.20.11/32"]
     port           = -1
   }
-#
-#  egress {
-#    protocol       = "ANY"
-#    description    = "rule2 description"
-#    v4_cidr_blocks = ["10.0.1.0/24", "10.0.2.0/24"]
-#    from_port      = 8090
-#    to_port        = 8099
-#  }
-#
-#  egress {
-#    protocol       = "UDP"
-#    description    = "rule3 description"
-#    v4_cidr_blocks = ["10.0.1.0/24"]
-#    from_port      = 8090
-#    to_port        = 8099
-#  }
-}
 
+  egress {
+    protocol       = "ANY"
+    description    = "from natgw to frontend and backup"
+    v4_cidr_blocks = ["192.168.10.11/32", "192.168.20.11/32"]
+    port      = -1
+  }
+}
 ```
 
