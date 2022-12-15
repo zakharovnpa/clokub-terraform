@@ -118,7 +118,7 @@ resource "yandex_compute_instance" "frontend" {
 ```
 
 * backend.tf
-```
+```tf
 #Instance backend
 resource "yandex_compute_instance" "backend" {
   name                      = "backend"
