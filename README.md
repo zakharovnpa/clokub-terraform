@@ -1,7 +1,7 @@
 # Репозиторий с файлами Terraform для выполнения ДЗ 15.1 - 15.4
 
 ## ДЗ 15.1. "Организация сети" 
-> Для запуска создания ресурсов в Yandex.Cloud необходимо заменить пустой файл `key.json` на файл с параметрами актуальной УЗ, а также в файле `variables.tf` добавить ID своего облака и Folder своего облака.
+> Для запуска создания ресурсов в Yandex.Cloud необходимо заменить пустой файл `key.json` на файл с параметрами актуальной УЗ, а также в файле `variables.tf` добавить ID Folder своего облака.
 
 ### 1. Подключение к провайдеру, сеть и подсети
 
@@ -44,27 +44,23 @@ resource "yandex_vpc_subnet" "subnet_priv" {
   zone           = "ru-central1-b"
   network_id     = yandex_vpc_network.default.id
   v4_cidr_blocks = ["192.168.20.0/24"]
-  route_table_id = yandex_vpc_route_table.rt-a.id
+  route_table_id = yandex_vpc_route_table.rt-a.id  // Привязка таблицы маршрутизации к подсети private
 }
-
 ```
-
 * variables.tf
 ```tf
-# Заменить на ID своего облака
-# https://console.cloud.yandex.ru/cloud?section=overview
+# ID облака
 variable "yandex_cloud_id" {
-  default = ""
+  default = "$YC_CLOUD_ID"
 }
 
-# Заменить на Folder своего облака
+# Заменить на ID Folder своего облака
 # https://console.cloud.yandex.ru/cloud?section=overview
 variable "yandex_folder_id" {
-  default = ""
+  default = "b1gd3hm4niaifoa8dahm"
 }
 
-# Заменить на ID своего образа
-# ID можно узнать с помощью команды yc compute image list
+# ID образа для развертывания инстанс frontend и backup
 variable "centos-7-base" {
   default = "fd87ftkus6nii1k3epnu"
 }
@@ -72,10 +68,9 @@ variable "centos-7-base" {
 # ID образа для развертывания шлюза в Интернет с NAT
 variable "nat-gw" {
   default = "fd80mrhj8fl2oe87o4e1"
+#  default = "fd8o8aph4t4pdisf1fio"  // Другой образ для NAT инстанса
 }
 ```
-
-
 
 ### 2. Инстансы frontend, backend
 
@@ -86,18 +81,21 @@ resource "yandex_compute_instance" "frontend" {
   name                      = "frontend"
   zone                      = "ru-central1-a"
   hostname                  = "frontend.netology.yc"
+  platform_id               = "standard-v3"
   allow_stopping_for_update = true
 
   resources {
-    cores  = 4
-    memory = 8
+    cores  = 2
+    memory = 1
+    core_fraction = "20"
   }
 
   boot_disk {
     initialize_params {
       image_id    = var.centos-7-base
       name        = "root-frontend"
-      type        = "network-nvme"
+#      type        = "network-nvme"
+      type        = "network-hdd"
       size        = "10"
     }
   }
@@ -108,6 +106,11 @@ resource "yandex_compute_instance" "frontend" {
     ip_address = "192.168.10.11"
   }
 
+  scheduling_policy {
+    preemptible = true  // Прерываемая ВМ
+
+  }
+
   metadata = {
     ssh-keys = "centos:${file("~/.ssh/id_rsa.pub")}"
   }
@@ -115,24 +118,27 @@ resource "yandex_compute_instance" "frontend" {
 ```
 
 * backend.tf
-```tf
+```
 #Instance backend
 resource "yandex_compute_instance" "backend" {
   name                      = "backend"
   zone                      = "ru-central1-b"
   hostname                  = "backend.netology.yc"
+  platform_id               = "standard-v3"
   allow_stopping_for_update = true
 
   resources {
-    cores  = 4
-    memory = 8
+    cores  = 2
+    memory = 1
+    core_fraction = "20"
   }
 
   boot_disk {
     initialize_params {
       image_id    = var.centos-7-base
       name        = "root-backend"
-      type        = "network-nvme"
+#      type        = "network-nvme"
+      type        = "network-hdd"
       size        = "10"
     }
   }
@@ -143,33 +149,43 @@ resource "yandex_compute_instance" "backend" {
     ip_address = "192.168.20.11"
   }
 
+  scheduling_policy {
+    preemptible = true  // Прерываемая ВМ
+
+  }
+
   metadata = {
     ssh-keys = "centos:${file("~/.ssh/id_rsa.pub")}"
   }
 }
 ```
 
-### 3. Инстанс NAT
+
+### 3. Инстанс NAT шлюза в Интернет
 
 * natgw.tf
 ```tf
-Instance natgw
+#Instance natgw
 resource "yandex_compute_instance" "natgw" {
   name                      = "natgw"
   zone                      = "ru-central1-a"
   hostname                  = "natgw.netology.yc"
+  platform_id               = "standard-v3"
   allow_stopping_for_update = true
 
   resources {
-    cores  = 4
-    memory = 8
+    cores  = 2
+    memory = 1
+    core_fraction = "20"
   }
 
   boot_disk {
     initialize_params {
       image_id    = var.nat-gw
+#      image_id    = "${var.nat-gw}"
       name        = "root-natgw"
-      type        = "network-nvme"
+#      type        = "network-nvme"
+      type        = "network-hdd"
       size        = "10"
     }
   }
@@ -180,15 +196,18 @@ resource "yandex_compute_instance" "natgw" {
     ip_address = "192.168.10.254"
   }
 
+  scheduling_policy {
+    preemptible = true  // Прерываемая ВМ
+
+  }
+
   metadata = {
     ssh-keys = "centos:${file("~/.ssh/id_rsa.pub")}"
   }
 }
 ```
 
-
 ### 4. Таблица маршрутизации, связанной с подсетью private
-
 * routetable.tf
 ```tf
 #Route table
@@ -196,17 +215,16 @@ resource "yandex_vpc_route_table" "rt-a" {
   network_id = "${yandex_vpc_network.default.id}"
 
   static_route {
-
+    
     destination_prefix = "0.0.0.0/0"
-    next_hop_address   = yandex_compute_instance.natgw.network_interface.0.ip_address
+    next_hop_address   = yandex_compute_instance.natgw.network_interface.0.ip_address   // Адрес NAT инстанса
   }
 }
 ```
-### 5. Ограничение доступа по сети (Security group) для NAT инстанса
-
+### Безопасность в сети
 * securitygroup.tf
 ```tf
-##Security group
+#Security group
 resource "yandex_vpc_security_group" "natgw" {
   name        = "Security group for NAt-instance"
   description = "Traffic instance NAT"
@@ -231,4 +249,3 @@ resource "yandex_vpc_security_group" "natgw" {
   }
 }
 ```
-
