@@ -94,7 +94,6 @@ resource "yandex_compute_instance" "frontend" {
     initialize_params {
       image_id    = var.centos-7-base
       name        = "root-frontend"
-#      type        = "network-nvme"
       type        = "network-hdd"
       size        = "10"
     }
@@ -137,7 +136,6 @@ resource "yandex_compute_instance" "backend" {
     initialize_params {
       image_id    = var.centos-7-base
       name        = "root-backend"
-#      type        = "network-nvme"
       type        = "network-hdd"
       size        = "10"
     }
@@ -182,9 +180,7 @@ resource "yandex_compute_instance" "natgw" {
   boot_disk {
     initialize_params {
       image_id    = var.nat-gw
-#      image_id    = "${var.nat-gw}"
       name        = "root-natgw"
-#      type        = "network-nvme"
       type        = "network-hdd"
       size        = "10"
     }
