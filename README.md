@@ -3,12 +3,12 @@
 ## ДЗ 15.1. "Организация сети" 
 > Для запуска создания ресурсов в Yandex.Cloud необходимо заменить пустой файл `key.json` на файл с параметрами актуальной УЗ, а также в файле `variables.tf` добавить ID своего облака и Folder своего облака.
 
-### 1. Подключение к провайдеру
+### 1. Подключение к провайдеру, сеть и подсети
 
 * key.json
   * ИСпользовать файл для своей УЗ
 
-* provider.tf
+* main.tf
 ```tf
 # Provider
 terraform {
@@ -24,6 +24,29 @@ provider "yandex" {
   cloud_id  = var.yandex_cloud_id
   folder_id = var.yandex_folder_id
 }
+
+# Network
+resource "yandex_vpc_network" "default" {
+  name = "net"
+}
+
+#Subnet public
+resource "yandex_vpc_subnet" "subnet_pub" {
+  name = "public"
+  zone           = "ru-central1-a"
+  network_id     = yandex_vpc_network.default.id
+  v4_cidr_blocks = ["192.168.10.0/24"]
+}
+
+#Subnet private
+resource "yandex_vpc_subnet" "subnet_priv" {
+  name = "private"
+  zone           = "ru-central1-b"
+  network_id     = yandex_vpc_network.default.id
+  v4_cidr_blocks = ["192.168.20.0/24"]
+  route_table_id = yandex_vpc_route_table.rt-a.id
+}
+
 ```
 
 * variables.tf
@@ -53,40 +76,8 @@ variable "nat-gw" {
 ```
 
 
-### 2. Сети и подсети
 
-* network.tf
-```tf
-# Network
-resource "yandex_vpc_network" "default" {
-  name = "net"
-}
-```
-
-* publicsubnet.tf
-```tf
-#Subnet public
-resource "yandex_vpc_subnet" "subnet_pub" {
-  name = "public"
-  zone           = "ru-central1-a"
-  network_id     = yandex_vpc_network.default.id
-  v4_cidr_blocks = ["192.168.10.0/24"]
-}
-```
-
-* privatesubnet.tf
-```tf
-#Subnet private
-resource "yandex_vpc_subnet" "subnet_priv" {
-  name = "private"
-  zone           = "ru-central1-b"
-  network_id     = yandex_vpc_network.default.id
-  v4_cidr_blocks = ["192.168.20.0/24"]
-  route_table_id = yandex_vpc_route_table.rt-a.id
-}
-```
-
-### 3. Инстансы frontend, backend
+### 2. Инстансы frontend, backend
 
 * frontend.tf
 ```tf
@@ -158,7 +149,7 @@ resource "yandex_compute_instance" "backend" {
 }
 ```
 
-### 4. Инстанс NAT
+### 3. Инстанс NAT
 
 * natgw.tf
 ```tf
@@ -196,7 +187,7 @@ resource "yandex_compute_instance" "natgw" {
 ```
 
 
-### 5. Таблица маршрутизации, связанной с подсетью private
+### 4. Таблица маршрутизации, связанной с подсетью private
 
 * routetable.tf
 ```tf
@@ -211,7 +202,7 @@ resource "yandex_vpc_route_table" "rt-a" {
   }
 }
 ```
-### 6. Ограничение доступа по сети (Security group) для NAT инстанса
+### 5. Ограничение доступа по сети (Security group) для NAT инстанса
 
 * securitygroup.tf
 ```tf
