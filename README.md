@@ -224,9 +224,9 @@ resource "yandex_vpc_route_table" "rt-a" {
 ### Безопасность в сети. 
 Группа безопасности разрешает любой трафик между сетями public и private.
 Группа должна быть привязана к NAT инстансу, но при данной конфигурации не привязана, т.к. при развертывании ресурсов получаем ошибку
-что `security_group_ids = yandex_compute_instance.natgw.id` должен быть строкой. В итоге securitygroup не используется, но файлы приложены для рассмотрения.
+что `security_group_ids = yandex_vpc_security_group.natgw.id` должен быть строкой. В итоге securitygroup не используется, но файлы приложены для рассмотрения.
 
-![error-securitygroup.png]()
+![error-security-group.png](/Files/error-security-group.png)
 
  
 * securitygroup.tf
