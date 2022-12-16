@@ -226,6 +226,7 @@ resource "yandex_vpc_route_table" "rt-a" {
 Группа должна быть привязана к NAT инстансу, но при данной конфигурации не привязана, т.к. при развертывании ресурсов получаем ошибку
 что `security_group_ids = yandex_compute_instance.natgw.id` должен быть строкой. В итоге securitygroup не используется, но файлы приложены для рассмотрения.
 
+![error-securitygroup.png]()
 
  
 * securitygroup.tf
