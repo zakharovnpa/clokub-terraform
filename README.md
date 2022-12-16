@@ -191,7 +191,7 @@ resource "yandex_compute_instance" "natgw" {
 
   network_interface {
     subnet_id      = yandex_vpc_subnet.subnet_pub.id
-#    security_group_ids = yandex_compute_instance.natgw.id  // отключено, т.к. получаем ошибку
+#    security_group_ids = yandex_vpc_security_group.natgw.id  // отключено, т.к. получаем ошибку
     nat            = true
     ip_address = "192.168.10.254"
   }
@@ -224,7 +224,7 @@ resource "yandex_vpc_route_table" "rt-a" {
 ### Безопасность в сети. 
 Группа безопасности разрешает любой трафик между сетями public и private.
 Группа должна быть привязана к NAT инстансу, но при данной конфигурации не привязана, т.к. при развертывании ресурсов получаем ошибку
-что security_group_ids = yandex_compute_instance.natgw.id должен быть строкой. В итоге securitygroup не используется, но файлы приложены для рассмотрения.
+что `security_group_ids = yandex_compute_instance.natgw.id` должен быть строкой. В итоге securitygroup не используется, но файлы приложены для рассмотрения.
 
 
  
