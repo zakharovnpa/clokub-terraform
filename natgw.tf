@@ -25,7 +25,7 @@ resource "yandex_compute_instance" "natgw" {
 
   network_interface {
     subnet_id      = yandex_vpc_subnet.subnet_pub.id
-#    security_group_ids = yandex_vpc_security_group.natgw.id 
+    security_group_ids = [yandex_vpc_security_group.natgw.id] 
     nat            = true
     ip_address = "192.168.10.254"
   }

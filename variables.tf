@@ -3,6 +3,9 @@ variable "yandex_cloud_id" {
   default = "$YC_CLOUD_ID"
 }
 
+# Token
+#variable "token"
+#  default = "$YC_TOKEN"
 
 # Заменить на ID Folder своего облака
 # https://console.cloud.yandex.ru/cloud?section=overview

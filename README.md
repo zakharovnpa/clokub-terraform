@@ -4,7 +4,7 @@
 
 **Внимание!** Домашнее задание и ответы на него расположены в репозитории [05-clokub-homeworks/15.1-Networking](https://github.com/zakharovnpa/05-clokub-homeworks/tree/main/15.1-Networking#readme)
 
-> Для запуска создания ресурсов в Yandex.Cloud необходимо приложить свой файл `key.json` с параметрами актуальной УЗ, а также в файле `variables.tf` добавить ID Folder своего облака.
+> Для запуска создания ресурсов в Yandex.Cloud необходимо приложить свой файл `key.json` с параметрами актуальной УЗ, а также в файле `variables.tf` добавить ID Folder своего облака. Мне не удалось настроить подключение к облаку по токену, хотя переменная `$YC_TOKEN` применялась. В данной конфигурации применены группы безопасности, описание которых дано в этом файле.
 
 ### 1. Подключение к провайдеру, сеть и подсети
 
@@ -24,6 +24,7 @@ terraform {
 
 provider "yandex" {
   service_account_key_file = "key.json"
+#  token     = var.yc_token
   cloud_id  = var.yandex_cloud_id
   folder_id = var.yandex_folder_id
   zone      = "ru-central1-a"
@@ -57,6 +58,11 @@ resource "yandex_vpc_subnet" "subnet_priv" {
 variable "yandex_cloud_id" {
   default = "$YC_CLOUD_ID"
 }
+
+# Token
+#variable "token"
+#  default = "$YC_TOKEN"
+
 
 # Заменить на ID Folder своего облака
 # https://console.cloud.yandex.ru/cloud?section=overview
@@ -192,7 +198,7 @@ resource "yandex_compute_instance" "natgw" {
 
   network_interface {
     subnet_id      = yandex_vpc_subnet.subnet_pub.id
-#    security_group_ids = yandex_vpc_security_group.natgw.id  // отключено, т.к. получаем ошибку
+    security_group_ids = [yandex_vpc_security_group.natgw.id]  # привязка группы безопасности к интерфейсу инстанса
     nat            = true
     ip_address = "192.168.10.254"
   }
@@ -223,11 +229,7 @@ resource "yandex_vpc_route_table" "rt-a" {
 }
 ```
 ### Безопасность в сети. 
-Группа безопасности разрешает любой трафик между сетями public и private.
-Группа должна быть привязана к NAT инстансу, но при данной конфигурации не привязана, т.к. при развертывании ресурсов получаем ошибку
-что `security_group_ids = yandex_vpc_security_group.natgw.id` должен быть строкой. В итоге securitygroup не используется, но файлы приложены для рассмотрения.
-
-![error-security-group.png](/Files/error-security-group.png)
+Группа безопасности в тестовом режиме разрешает для NAT инстанса любой трафик в направлении сетей public и private.
 
  
 * securitygroup.tf
@@ -243,17 +245,17 @@ resource "yandex_vpc_security_group" "natgw" {
   }
 
   ingress {
-    protocol       = "ANY"
-    description    = "from frontend and backup to natgw"
-    v4_cidr_blocks = ["192.168.10.0/24", "192.168.20.0/24"]
-    port           = -1
+    protocol       = "TCP"
+    description    = "from Internet to natgw"
+    v4_cidr_blocks = ["0.0.0.0/0"]      # для всех адресов
+    port        = 22                    # for ssh
   }
 
   egress {
-    protocol       = "ANY"
+    protocol       = "ANY"                    # любые протоклоы
     description    = "from natgw to frontend and backup"
-    v4_cidr_blocks = ["192.168.10.0/24", "192.168.20.0/24"]
-    port      = -1
+    v4_cidr_blocks = ["192.168.10.11/32", "192.168.20.11/32"]            # только для адресов fronend и backend
+    port      = -1                            # все номера портов
   }
 }
 ```
