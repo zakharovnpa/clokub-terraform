@@ -246,7 +246,7 @@ resource "yandex_vpc_security_group" "natgw" {
 
   ingress {
     protocol       = "TCP"
-    description    = "from Internet to natgw"
+    description    = "secure shell from Internet to natgw"
     v4_cidr_blocks = ["0.0.0.0/0"]      # для всех адресов
     port        = 22                    # for ssh
   }
