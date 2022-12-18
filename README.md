@@ -4,12 +4,15 @@
 
 **Внимание!** Домашнее задание и ответы на него расположены в репозитории [05-clokub-homeworks/15.1-Networking](https://github.com/zakharovnpa/05-clokub-homeworks/tree/main/15.1-Networking#readme)
 
-> Для запуска создания ресурсов в Yandex.Cloud необходимо приложить свой файл `key.json` с параметрами актуальной УЗ, а также в файле `variables.tf` добавить ID Folder своего облака. Мне не удалось настроить подключение к облаку по токену, хотя переменная `$YC_TOKEN` применялась. Я получал ошибку `токен OAuth недействителен или просрочен`, хотя токен создавал командой `yc iam create-token` перед запуском terraform, а вывод переменной `echo $YC_TOKEN` совпадал по значению с токеном. Таже в данной конфигурации применены группы безопасности, описание которых дано в этом файле.
+1. Для запуска создания ресурсов в Yandex.Cloud необходимо экспортировать переменные:
+```sh
+export YC_TOKEN=$(yc iam create-token)
+export YC_CLOUD_ID=$(yc config get cloud-id)
+export YC_FOLDER_ID=$(yc config get folder-id)
+```
+2. В данной конфигурации применены группы безопасности, описание которых дано в разделе 5 этого файла.
 
 ### 1. Подключение к провайдеру, сеть и подсети
-
-* key.json
-  - Использовать файл для своей УЗ
 
 * main.tf
 ```tf
@@ -23,11 +26,6 @@ terraform {
 }
 
 provider "yandex" {
-  service_account_key_file = "key.json"
-#  token     = var.yc_token
-#  token     = "$YC_TOKEN"
-  cloud_id  = var.yandex_cloud_id
-  folder_id = var.yandex_folder_id
   zone      = "ru-central1-a"
 }
 
@@ -55,23 +53,7 @@ resource "yandex_vpc_subnet" "subnet_priv" {
 ```
 * variables.tf
 ```tf
-# ID облака
-variable "yandex_cloud_id" {
-  default = "$YC_CLOUD_ID"
-}
-
-# Token
-#variable "token"
-#  default = "$YC_TOKEN"
-
-
-# Заменить на ID Folder своего облака
-# https://console.cloud.yandex.ru/cloud?section=overview
-variable "yandex_folder_id" {
-  default = "b1gd3hm4niaifoa8dahm"
-}
-
-# ID образа для развертывания инстанс frontend и backup
+# ID образа ОС Centos-7, собранной с помощью Packer
 variable "centos-7-base" {
   default = "fd87ftkus6nii1k3epnu"
 }
@@ -229,7 +211,7 @@ resource "yandex_vpc_route_table" "rt-a" {
   }
 }
 ```
-### Безопасность в сети. 
+### 5. Безопасность в сети. 
 Группа безопасности в тестовом режиме разрешает для NAT инстанса любой трафик в направлении сетей public и private.
 
  
