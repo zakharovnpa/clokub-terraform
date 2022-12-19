@@ -40,8 +40,9 @@ resource "yandex_compute_instance" "natgw" {
   }
 }
 
+/*
 output "natgw_ip" {
   description = "IP address NAT-gw instance"
   value = yandex_compute_instance.natgw.network_interface.0.nat_ip_address
 }
-
+*/

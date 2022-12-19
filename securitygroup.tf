@@ -9,17 +9,16 @@ resource "yandex_vpc_security_group" "natgw" {
   }
 
   ingress {
-    protocol       = "TCP"
+    protocol       = "ANY"
     description    = "secure shell from Internet to natgw"
     v4_cidr_blocks = ["0.0.0.0/0"]
-    port        = 22
+    port        = -1
   }
 
   egress {
     protocol       = "ANY"
     description    = "from natgw to frontend and backup"
-    v4_cidr_blocks = ["192.168.10.11/32", "192.168.20.11/32"]
+    v4_cidr_blocks = ["192.168.10.11/32", "192.168.20.11/32", "0.0.0.0/0"]
     port      = -1
   }
-
 }

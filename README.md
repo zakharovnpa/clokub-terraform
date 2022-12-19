@@ -231,22 +231,57 @@ resource "yandex_vpc_security_group" "natgw" {
   description = "Traffic instance NAT"
   network_id  = "${yandex_vpc_network.default.id}"
 
-  labels = {
-    my-label = "my-label-value"
-  }
-
   ingress {
-    protocol       = "TCP"
+    protocol       = "ANY"
     description    = "secure shell from Internet to natgw"
-    v4_cidr_blocks = ["0.0.0.0/0"]      # для всех адресов
-    port        = 22                    # for ssh
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    port        = -1
   }
 
   egress {
-    protocol       = "ANY"                    # любые протоклоы
+    protocol       = "ANY"
     description    = "from natgw to frontend and backup"
-    v4_cidr_blocks = ["192.168.10.11/32", "192.168.20.11/32"]            # только для адресов fronend и backend
-    port      = -1                            # все номера портов
+    v4_cidr_blocks = ["192.168.10.11/32", "192.168.20.11/32", "0.0.0.0/0"]
+    port      = -1
   }
 }
+
+```
+
+### 6. Выходные данные
+Выводит на экран ip адреса инстансов
+
+* ouputs.tf
+```tf
+output "natgw_wan_ip" {     # вывод на зкран ip адрес NAT-gw инстанса
+  description = "WAN IP address NAT-gw instance"
+  value = yandex_compute_instance.natgw.network_interface.0.nat_ip_address
+}
+
+output "natgw_lan_ip" {     # вывод на зкран ip адрес NAT-gw инстанса
+  description = "LAN IP address NAT-gw instance"
+  value = yandex_compute_instance.natgw.network_interface.0.ip_address
+}
+
+output "frontend_wan_ip" {     # вывод на зкран WAN ip адресf Frontend инстанса
+  description = "WAN IP address Frontend instance"
+  value = yandex_compute_instance.frontend.network_interface.0.nat_ip_address
+}
+
+output "frontend_lan_ip" {     # вывод на зкран LAN ip адреса Frontend инстанса
+  description = "LAN IP address Frontend instance"
+  value = yandex_compute_instance.frontend.network_interface.0.ip_address
+}
+
+
+output "backend_wan_ip" {     # вывод на зкран WAN ip адресf Backend инстанса
+  description = "WAN IP address Backend instance"
+  value = yandex_compute_instance.backend.network_interface.0.nat_ip_address
+}
+
+output "backend_lan_ip" {     # вывод на зкран LAN ip адреса Backend инстанса
+  description = "LAN IP address Backend instance"
+  value = yandex_compute_instance.backend.network_interface.0.ip_address
+}
+
 ```
