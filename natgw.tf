@@ -39,8 +39,9 @@ resource "yandex_compute_instance" "natgw" {
     ssh-keys = "centos:${file("~/.ssh/id_rsa.pub")}"
   }
 
-output "natgw_ip" {
-  description = "IP address NAT-gw instance"
-  value = yandex_compute_instance.natgw.network_interface.0.nat_ip_address
+  output "natgw_ip" {
+    description = "IP address NAT-gw instance"
+    value = yandex_compute_instance.natgw.network_interface.0.nat_ip_address
+  }
 
 }
